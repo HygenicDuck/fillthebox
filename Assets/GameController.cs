@@ -24,15 +24,18 @@ public class GameController : MonoBehaviour
 	[SerializeField] Item m_currentItem;
 	[SerializeField] private GameObject[] m_itemPrefabs;
 	[SerializeField] private GameObject[] m_boxes;
+	[SerializeField] private Transform[] m_boxSpawnPositions;
+	[SerializeField] private GameObject m_boxPrefab;
 	[SerializeField] private Transform m_itemSpawnParent;
 	[SerializeField] private Vector2 m_bounceAmount;
 
-	int m_currentBoxIndex = 0;
-	int m_currentItemIndex = 0;
+	int m_currentBoxIndex = -1;
+	int m_currentItemIndex = -1;
 
 	// Use this for initialization
-	void Start () {
-		
+	void Start () 
+	{
+		StartCoroutine (NextBoxSequence ());
 	}
 	
 	// Update is called once per frame
@@ -47,12 +50,25 @@ public class GameController : MonoBehaviour
 
 	void NextBox()
 	{
+		if (m_currentBox != null)
+		{
+			Destroy (m_currentBox.gameObject);
+		}
+
 		m_currentBoxIndex++;
-		if (m_currentBoxIndex >= m_boxes.Length)
+		if (m_currentBoxIndex >= m_boxSpawnPositions.Length)
 		{
 			m_currentBoxIndex = 0;
 		}
-		m_currentBox = m_boxes [m_currentBoxIndex].GetComponent<Box>();
+
+		m_currentBox = Instantiate (m_boxPrefab, m_boxSpawnPositions[m_currentBoxIndex]).GetComponent<Box>();
+		m_currentBox.transform.localPosition = Vector3.zero;
+		Vector3 scale = m_currentBox.transform.localScale;
+		if (m_currentBoxIndex == 1)
+		{
+			scale.x = -scale.x;
+		}
+		m_currentBox.transform.localScale = scale;
 	}
 
 	void SpawnNextItem()
@@ -69,15 +85,23 @@ public class GameController : MonoBehaviour
 
 	IEnumerator ItemInBoxSequence()
 	{
-		yield return new WaitForSeconds(0.2f);
+		Rigidbody2D rb = m_currentItem.gameObject.GetComponent<Rigidbody2D>();
+		rb.velocity = Vector3.zero;
+		yield return new WaitForSeconds (0.2f);
 		m_currentBox.ShutTheBox ();
-		yield return new WaitForSeconds(0.5f);
+		yield return new WaitForSeconds (0.5f);
 		Destroy (m_currentItem.gameObject);
-		m_currentBox.MoveBoxOff ();
-		yield return new WaitForSeconds(0.2f);
+		m_currentBox.MoveBoxOff ((m_currentBoxIndex * 2)-1);
+		yield return new WaitForSeconds (0.2f);
 
+		yield return NextBoxSequence();
+	}
+
+
+	IEnumerator NextBoxSequence()
+	{
 		NextBox ();
-		m_currentBox.MoveBoxOn ();
+		m_currentBox.MoveBoxOn ((m_currentBoxIndex * 2)-1);
 
 		yield return new WaitForSeconds(0.2f);
 		SpawnNextItem ();

@@ -23,21 +23,21 @@ public class Box : MonoBehaviour
 		m_animator.Play ("shut lid");
 	}
 
-	public void MoveBoxOff()
+	public void MoveBoxOff(int direction)
 	{
 		Mover mover = GetComponent<Mover> ();
 		if (mover != null)
 		{
-			mover.MoveBy (new Vector3 (m_offscreenOffset, 0, 0), 0.25f);
+			mover.MoveBy (new Vector3 (-direction*m_offscreenOffset, 0, 0), 0.25f);
 		}
 	}
 
-	public void MoveBoxOn()
+	public void MoveBoxOn(int direction)
 	{
 		Mover mover = GetComponent<Mover> ();
 		if (mover != null)
 		{
-			mover.MoveBy (new Vector3 (-m_offscreenOffset, 0, 0), 0.25f);
+			mover.MoveBy (new Vector3 (direction*m_offscreenOffset, 0, 0), 0.25f);
 		}
 
 		m_animator.Play ("stay open");
