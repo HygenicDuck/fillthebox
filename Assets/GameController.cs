@@ -25,16 +25,20 @@ public class GameController : MonoBehaviour
 	[SerializeField] private GameObject[] m_itemPrefabs;
 	[SerializeField] private GameObject[] m_boxes;
 	[SerializeField] private Transform[] m_boxSpawnPositions;
-	[SerializeField] private GameObject m_boxPrefab;
+	[SerializeField] private GameObject[] m_boxPrefabs;
 	[SerializeField] private Transform m_itemSpawnParent;
 	[SerializeField] private Vector2 m_bounceAmount;
 
-	int m_currentBoxIndex = -1;
-	int m_currentItemIndex = -1;
+	const float INITIAL_TIME = 10f;
+	const float TIME_ADDED_PER_ITEM = 6f;
+
+	int m_currentBoxIndex = 0;
+	int m_currentItemIndex = 0;
 
 	// Use this for initialization
 	void Start () 
 	{
+		Timer.Instance.SetTime (INITIAL_TIME);
 		StartCoroutine (NextBoxSequence ());
 	}
 	
@@ -60,8 +64,11 @@ public class GameController : MonoBehaviour
 		{
 			m_currentBoxIndex = 0;
 		}
+	}
 
-		m_currentBox = Instantiate (m_boxPrefab, m_boxSpawnPositions[m_currentBoxIndex]).GetComponent<Box>();
+	void MakeBox()
+	{
+		m_currentBox = Instantiate (m_boxPrefabs[m_currentItemIndex], m_boxSpawnPositions[m_currentBoxIndex]).GetComponent<Box>();
 		m_currentBox.transform.localPosition = Vector3.zero;
 		Vector3 scale = m_currentBox.transform.localScale;
 		if (m_currentBoxIndex == 1)
@@ -71,14 +78,17 @@ public class GameController : MonoBehaviour
 		m_currentBox.transform.localScale = scale;
 	}
 
-	void SpawnNextItem()
+	void NextItem()
 	{
 		m_currentItemIndex++;
 		if (m_currentItemIndex >= m_itemPrefabs.Length)
 		{
 			m_currentItemIndex = 0;
 		}
+	}
 
+	void SpawnItem()
+	{
 		m_currentItem = Instantiate (m_itemPrefabs [m_currentItemIndex], m_itemSpawnParent).GetComponent<Item>();
 		m_currentItem.transform.localPosition = Vector3.zero;
 	}
@@ -93,36 +103,41 @@ public class GameController : MonoBehaviour
 		Destroy (m_currentItem.gameObject);
 		m_currentBox.MoveBoxOff ((m_currentBoxIndex * 2)-1);
 		yield return new WaitForSeconds (0.2f);
+		Timer.Instance.IncreaseTime (TIME_ADDED_PER_ITEM);
 
+		NextBox ();
+		NextItem ();
 		yield return NextBoxSequence();
 	}
 
 
 	IEnumerator NextBoxSequence()
 	{
-		NextBox ();
+		MakeBox ();
 		m_currentBox.MoveBoxOn ((m_currentBoxIndex * 2)-1);
 
 		yield return new WaitForSeconds(0.2f);
-		SpawnNextItem ();
+		SpawnItem ();
 	}
 
 	public void BounceItem()
 	{
-		//Debug.Log ("Mouse down "+m_bouncingObject.transform.position.x+", "+m_boxCentre.position.x);
-		Rigidbody2D rb = m_currentItem.GetComponent<Rigidbody2D> ();
-		Vector2 v = rb.velocity;
-		v.y = m_bounceAmount.y;
+		if (!Timer.Instance.TimeUp ())
+		{
+			//Debug.Log ("Mouse down "+m_bouncingObject.transform.position.x+", "+m_boxCentre.position.x);
+			Rigidbody2D rb = m_currentItem.GetComponent<Rigidbody2D> ();
+			Vector2 v = rb.velocity;
+			v.y = m_bounceAmount.y;
 
-		if (m_currentItem.transform.position.x < m_currentBox.transform.position.x)
-		{
-			v.x = m_bounceAmount.x;
-		} 
-		else
-		{
-			v.x = -m_bounceAmount.x;
+			if (m_currentItem.transform.position.x < m_currentBox.transform.position.x)
+			{
+				v.x = m_bounceAmount.x;
+			} else
+			{
+				v.x = -m_bounceAmount.x;
+			}
+
+			rb.velocity = v;
 		}
-
-		rb.velocity = v;
 	}
 }
