@@ -20,6 +20,7 @@ public class Box : MonoBehaviour
 	public void ShutTheBox()
 	{
 		m_animator.enabled = true;
+		m_animator.Play ("shut lid");
 	}
 
 	public void MoveBoxOff()
@@ -38,5 +39,7 @@ public class Box : MonoBehaviour
 		{
 			mover.MoveBy (new Vector3 (-m_offscreenOffset, 0, 0), 0.25f);
 		}
+
+		m_animator.Play ("stay open");
 	}
 }

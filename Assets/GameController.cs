@@ -25,6 +25,8 @@ public class GameController : MonoBehaviour
 	[SerializeField] private GameObject[] m_itemPrefabs;
 	[SerializeField] private GameObject[] m_boxes;
 	[SerializeField] private Transform m_itemSpawnParent;
+	[SerializeField] private Vector2 m_bounceAmount;
+
 	int m_currentBoxIndex = 0;
 	int m_currentItemIndex = 0;
 
@@ -46,7 +48,7 @@ public class GameController : MonoBehaviour
 	void NextBox()
 	{
 		m_currentBoxIndex++;
-		if (m_currentBoxIndex > m_boxes.Length)
+		if (m_currentBoxIndex >= m_boxes.Length)
 		{
 			m_currentBoxIndex = 0;
 		}
@@ -56,12 +58,13 @@ public class GameController : MonoBehaviour
 	void SpawnNextItem()
 	{
 		m_currentItemIndex++;
-		if (m_currentItemIndex > m_itemPrefabs.Length)
+		if (m_currentItemIndex >= m_itemPrefabs.Length)
 		{
 			m_currentItemIndex = 0;
 		}
 
-		m_currentItem = Instantiate (m_itemPrefabs [m_currentItemIndex]).GetComponent<Item>();
+		m_currentItem = Instantiate (m_itemPrefabs [m_currentItemIndex], m_itemSpawnParent).GetComponent<Item>();
+		m_currentItem.transform.localPosition = Vector3.zero;
 	}
 
 	IEnumerator ItemInBoxSequence()
@@ -78,5 +81,24 @@ public class GameController : MonoBehaviour
 
 		yield return new WaitForSeconds(0.2f);
 		SpawnNextItem ();
+	}
+
+	public void BounceItem()
+	{
+		//Debug.Log ("Mouse down "+m_bouncingObject.transform.position.x+", "+m_boxCentre.position.x);
+		Rigidbody2D rb = m_currentItem.GetComponent<Rigidbody2D> ();
+		Vector2 v = rb.velocity;
+		v.y = m_bounceAmount.y;
+
+		if (m_currentItem.transform.position.x < m_currentBox.transform.position.x)
+		{
+			v.x = m_bounceAmount.x;
+		} 
+		else
+		{
+			v.x = -m_bounceAmount.x;
+		}
+
+		rb.velocity = v;
 	}
 }
