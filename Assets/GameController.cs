@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour 
 {
@@ -21,17 +22,19 @@ public class GameController : MonoBehaviour
 
 
 	[SerializeField] Box m_currentBox;
-	[SerializeField] List<Item> m_currentItems;
+	[SerializeField] List<Item> m_activeItems;
+	[SerializeField] List<int> m_currentItemTypes;
 	[SerializeField] private GameObject[] m_itemPrefabs;
 	[SerializeField] private GameObject[] m_boxes;
 	[SerializeField] private Transform[] m_boxSpawnPositions;
 	[SerializeField] private GameObject[] m_boxPrefabs;
+	[SerializeField] private GameObject m_gameOverText;
 	[SerializeField] private Transform m_itemSpawnParent;
 	[SerializeField] private Vector2 m_bounceAmount;
 
 	const float INITIAL_TIME = 10f;
 	const float TIME_ADDED_PER_ITEM = 6f;
-	const int NUM_ITEMS_AT_ONCE = 1;
+	const int NUM_ITEMS_AT_ONCE = 3;
 
 	int m_currentBoxIndex = 0;
 	int m_currentItemIndex = 0;
@@ -39,14 +42,49 @@ public class GameController : MonoBehaviour
 	// Use this for initialization
 	void Start () 
 	{
+		m_gameOverText.SetActive (false);
 		Timer.Instance.SetTime (INITIAL_TIME);
-		m_currentItems = new List<Item> ();
+		m_activeItems = new List<Item> ();
+		StartCoroutine (MainGameLoop());
 		StartCoroutine (NextBoxSequence (NUM_ITEMS_AT_ONCE));
+	}
+
+	IEnumerator MainGameLoop()
+	{
+		do
+		{
+			while (!Timer.Instance.TimeUp ())
+			{
+				yield return null;
+			}
+
+			// wait a bit to see if something is going to fall in the box after the timer has expired.
+			yield return new WaitForSeconds (2f);
+		} while (!Timer.Instance.TimeUp ());
+
+		// it is game over
+		StartCoroutine (GameOverSequence ());
+	}
+
+	IEnumerator GameOverSequence()
+	{
+//		for (int i = 0; i < 5; i++)
+//		{
+//			m_gameOverText.SetActive (true);
+//			yield return new WaitForSeconds (0.5f);
+//			m_gameOverText.SetActive (false);
+//			yield return new WaitForSeconds (0.25f);
+//		}
+
+		m_gameOverText.SetActive (true);
+		yield return new WaitForSeconds (2f);
+
+		SceneManager.LoadScene ("main");
 	}
 	
 	// Update is called once per frame
-	void Update () {
-		
+	void Update () 
+	{
 	}
 
 	public void OnItemEntersBox(Item item)
@@ -80,7 +118,7 @@ public class GameController : MonoBehaviour
 		m_currentBox.transform.localScale = scale;
 
 		Box box = m_currentBox.GetComponent<Box> ();
-		box.ShowItemIndicator (Random.Range(0,7));
+		box.ShowItemIndicator (m_currentItemTypes[Random.Range(0,m_currentItemTypes.Count)]);
 	}
 
 	void NextItem()
@@ -92,12 +130,14 @@ public class GameController : MonoBehaviour
 		}
 	}
 
-	void SpawnItem()
+	void SpawnItem(int type)
 	{
-		Item item = Instantiate (m_itemPrefabs [m_currentItemIndex], m_itemSpawnParent).GetComponent<Item>();
-		item.type = m_currentItemIndex;
-		m_currentItems.Add (item);
+		Item item = Instantiate (m_itemPrefabs [type], m_itemSpawnParent).GetComponent<Item>();
+		item.type = type;
+		m_activeItems.Add (item);
 		item.transform.localPosition = Vector3.zero;
+		Vector3 r = new Vector3 (0f, 0f, Random.Range (0f, 360f));
+		item.transform.eulerAngles = r;
 	}
 
 	IEnumerator ItemInBoxSequence(Item item)
@@ -108,13 +148,17 @@ public class GameController : MonoBehaviour
 		yield return new WaitForSeconds (0.2f);
 		m_currentBox.ShutTheBox ();
 		yield return new WaitForSeconds (0.3f);
-		m_currentItems.Remove (item);
+		//Debug.Log ("Before removing "+item.type+" : "+m_currentItemTypes.Count);
+		m_currentItemTypes.Remove (item.type);
+		//Debug.Log ("After removing "+item.type+" : "+m_currentItemTypes.Count);
+		m_activeItems.Remove (item);
 		Destroy (item.gameObject);
 		m_currentBox.MoveBoxOff ((m_currentBoxIndex * 2)-1);
 		yield return new WaitForSeconds (0.2f);
 		Timer.Instance.IncreaseTime (TIME_ADDED_PER_ITEM);
 
-		int numItemsToSpawn = (m_currentItems.Count == 0) ? NUM_ITEMS_AT_ONCE : 0;
+		Debug.Log ("m_currentItemTypes.Count "+m_currentItemTypes.Count);
+		int numItemsToSpawn = (m_currentItemTypes.Count == 0) ? NUM_ITEMS_AT_ONCE : 0;
 			
 		yield return NextBoxSequence(numItemsToSpawn);
 	}
@@ -122,15 +166,24 @@ public class GameController : MonoBehaviour
 
 	IEnumerator NextBoxSequence(int numItems)
 	{
+		for (int i = 0; i < numItems; i++)
+		{
+			m_currentItemTypes.Add (Random.Range(0,m_itemPrefabs.Length));
+			Debug.Log ("Adding a random item "+i);
+
+		}
+		
 		NextBox ();
 		MakeBox ();
 		m_currentBox.MoveBoxOn ((m_currentBoxIndex * 2)-1);
 
-		for (int i = 0; i < numItems; i++)
+		Debug.Log ("m_currentItemTypes.Count = "+m_currentItemTypes.Count);
+		for (int i = m_currentItemTypes.Count-numItems; i < m_currentItemTypes.Count; i++)
 		{
-			yield return new WaitForSeconds (0.2f);
+			yield return new WaitForSeconds (0.4f);
 			NextItem ();
-			SpawnItem ();
+			Debug.Log ("m_currentItemTypes[i] = "+m_currentItemTypes[i]);
+			SpawnItem (m_currentItemTypes[i]);
 		}
 	}
 
@@ -138,7 +191,7 @@ public class GameController : MonoBehaviour
 	{
 		if (!Timer.Instance.TimeUp ())
 		{
-			foreach (Item item in m_currentItems)
+			foreach (Item item in m_activeItems)
 			{
 				//Debug.Log ("Mouse down "+m_bouncingObject.transform.position.x+", "+m_boxCentre.position.x);
 				Rigidbody2D rb = item.GetComponent<Rigidbody2D> ();
@@ -156,7 +209,9 @@ public class GameController : MonoBehaviour
 					item.m_bounceDirection = -1f;
 				}
 
-				v.x = m_bounceAmount.x * item.m_bounceDirection;
+				bool belowBox = (item.transform.position.y < m_currentBox.transform.position.y);
+
+				v.x = m_bounceAmount.x * item.m_bounceDirection * (belowBox ? 2f : 1f);
 
 				rb.velocity = v;
 
@@ -167,4 +222,6 @@ public class GameController : MonoBehaviour
 			}
 		}
 	}
+
+	
 }

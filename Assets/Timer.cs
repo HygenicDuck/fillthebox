@@ -23,16 +23,26 @@ public class Timer : MonoBehaviour
 	[SerializeField] Text m_timerText;
 
 	float m_timeLeft = 0f;
+	SpriteScaler scaler = null;
 
 	// Use this for initialization
 	void Start () 
 	{
+		scaler = GetComponent<SpriteScaler> ();
 	}
 	
 	// Update is called once per frame
 	void Update () 
 	{
+		float timeBefore = m_timeLeft;
 		m_timeLeft -= Time.deltaTime;
+
+		if ((m_timeLeft < 5f) && ((int)timeBefore != (int)m_timeLeft))
+		{
+			//scaler.ScaleBackFrom (2f, 0.1f);
+			scaler.ScaleUsingCurve (1.0f);
+		}
+
 		if (m_timeLeft <= 0f)
 		{
 			m_timeLeft = 0f;
@@ -64,6 +74,6 @@ public class Timer : MonoBehaviour
 
 	public bool TimeUp()
 	{
-		return false;	//(m_timeLeft == 0f);
+		return (m_timeLeft == 0f);
 	}
 }
