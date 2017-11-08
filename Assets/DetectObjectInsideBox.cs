@@ -17,6 +17,11 @@ public class DetectObjectInsideBox : MonoBehaviour {
 	void OnTriggerEnter2D(Collider2D coll) 
 	{
 		Debug.Log ("thing inside box!");
-		GameController.Instance.OnItemEntersBox ();
+		Item item = coll.gameObject.GetComponent<Item> ();
+		if (item == null)
+		{
+			item = coll.gameObject.transform.parent.gameObject.GetComponent<Item> ();
+		}
+		GameController.Instance.OnItemEntersBox (item);
 	}
 }

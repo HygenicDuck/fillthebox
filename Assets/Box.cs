@@ -6,6 +6,8 @@ public class Box : MonoBehaviour
 {
 	[SerializeField] private Animator m_animator;
 	[SerializeField] private float m_offscreenOffset;
+	[SerializeField] private GameObject m_itemDetector;
+	[SerializeField] private ItemIndicator m_itemIndicator;
 
 	// Use this for initialization
 	void Start () {
@@ -41,5 +43,15 @@ public class Box : MonoBehaviour
 		}
 
 		m_animator.Play ("stay open");
+	}
+
+	public void StopDetectingItems()
+	{
+		m_itemDetector.SetActive (false);
+	}
+
+	public void ShowItemIndicator(int i)
+	{
+		m_itemIndicator.ShowItemIndicator (i);
 	}
 }

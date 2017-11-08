@@ -21,7 +21,7 @@ public class GameController : MonoBehaviour
 
 
 	[SerializeField] Box m_currentBox;
-	[SerializeField] Item m_currentItem;
+	[SerializeField] List<Item> m_currentItems;
 	[SerializeField] private GameObject[] m_itemPrefabs;
 	[SerializeField] private GameObject[] m_boxes;
 	[SerializeField] private Transform[] m_boxSpawnPositions;
@@ -31,6 +31,7 @@ public class GameController : MonoBehaviour
 
 	const float INITIAL_TIME = 10f;
 	const float TIME_ADDED_PER_ITEM = 6f;
+	const int NUM_ITEMS_AT_ONCE = 1;
 
 	int m_currentBoxIndex = 0;
 	int m_currentItemIndex = 0;
@@ -39,7 +40,8 @@ public class GameController : MonoBehaviour
 	void Start () 
 	{
 		Timer.Instance.SetTime (INITIAL_TIME);
-		StartCoroutine (NextBoxSequence ());
+		m_currentItems = new List<Item> ();
+		StartCoroutine (NextBoxSequence (NUM_ITEMS_AT_ONCE));
 	}
 	
 	// Update is called once per frame
@@ -47,9 +49,9 @@ public class GameController : MonoBehaviour
 		
 	}
 
-	public void OnItemEntersBox()
+	public void OnItemEntersBox(Item item)
 	{
-		StartCoroutine (ItemInBoxSequence ());
+		StartCoroutine (ItemInBoxSequence (item));
 	}
 
 	void NextBox()
@@ -76,6 +78,9 @@ public class GameController : MonoBehaviour
 			scale.x = -scale.x;
 		}
 		m_currentBox.transform.localScale = scale;
+
+		Box box = m_currentBox.GetComponent<Box> ();
+		box.ShowItemIndicator (Random.Range(0,7));
 	}
 
 	void NextItem()
@@ -89,55 +94,77 @@ public class GameController : MonoBehaviour
 
 	void SpawnItem()
 	{
-		m_currentItem = Instantiate (m_itemPrefabs [m_currentItemIndex], m_itemSpawnParent).GetComponent<Item>();
-		m_currentItem.transform.localPosition = Vector3.zero;
+		Item item = Instantiate (m_itemPrefabs [m_currentItemIndex], m_itemSpawnParent).GetComponent<Item>();
+		item.type = m_currentItemIndex;
+		m_currentItems.Add (item);
+		item.transform.localPosition = Vector3.zero;
 	}
 
-	IEnumerator ItemInBoxSequence()
+	IEnumerator ItemInBoxSequence(Item item)
 	{
-		Rigidbody2D rb = m_currentItem.gameObject.GetComponent<Rigidbody2D>();
+		m_currentBox.StopDetectingItems ();
+		Rigidbody2D rb = item.gameObject.GetComponent<Rigidbody2D>();
 		rb.velocity = Vector3.zero;
 		yield return new WaitForSeconds (0.2f);
 		m_currentBox.ShutTheBox ();
-		yield return new WaitForSeconds (0.5f);
-		Destroy (m_currentItem.gameObject);
+		yield return new WaitForSeconds (0.3f);
+		m_currentItems.Remove (item);
+		Destroy (item.gameObject);
 		m_currentBox.MoveBoxOff ((m_currentBoxIndex * 2)-1);
 		yield return new WaitForSeconds (0.2f);
 		Timer.Instance.IncreaseTime (TIME_ADDED_PER_ITEM);
 
-		NextBox ();
-		NextItem ();
-		yield return NextBoxSequence();
+		int numItemsToSpawn = (m_currentItems.Count == 0) ? NUM_ITEMS_AT_ONCE : 0;
+			
+		yield return NextBoxSequence(numItemsToSpawn);
 	}
 
 
-	IEnumerator NextBoxSequence()
+	IEnumerator NextBoxSequence(int numItems)
 	{
+		NextBox ();
 		MakeBox ();
 		m_currentBox.MoveBoxOn ((m_currentBoxIndex * 2)-1);
 
-		yield return new WaitForSeconds(0.2f);
-		SpawnItem ();
+		for (int i = 0; i < numItems; i++)
+		{
+			yield return new WaitForSeconds (0.2f);
+			NextItem ();
+			SpawnItem ();
+		}
 	}
 
 	public void BounceItem()
 	{
 		if (!Timer.Instance.TimeUp ())
 		{
-			//Debug.Log ("Mouse down "+m_bouncingObject.transform.position.x+", "+m_boxCentre.position.x);
-			Rigidbody2D rb = m_currentItem.GetComponent<Rigidbody2D> ();
-			Vector2 v = rb.velocity;
-			v.y = m_bounceAmount.y;
+			foreach (Item item in m_currentItems)
+			{
+				//Debug.Log ("Mouse down "+m_bouncingObject.transform.position.x+", "+m_boxCentre.position.x);
+				Rigidbody2D rb = item.GetComponent<Rigidbody2D> ();
+				Vector2 v = rb.velocity;
+				v.y = m_bounceAmount.y;
 
-			if (m_currentItem.transform.position.x < m_currentBox.transform.position.x)
-			{
-				v.x = m_bounceAmount.x;
-			} else
-			{
-				v.x = -m_bounceAmount.x;
+				float hysteresisRange = 0.5f;
+
+				if (item.transform.position.x < (m_currentBox.transform.position.x - hysteresisRange))
+				{
+					item.m_bounceDirection = 1f;
+				}
+				else if (item.transform.position.x > (m_currentBox.transform.position.x + hysteresisRange))
+				{
+					item.m_bounceDirection = -1f;
+				}
+
+				v.x = m_bounceAmount.x * item.m_bounceDirection;
+
+				rb.velocity = v;
+
+				float av = rb.angularVelocity;
+				av += (200.1f * item.m_bounceDirection);
+				rb.angularVelocity = av;
+
 			}
-
-			rb.velocity = v;
 		}
 	}
 }

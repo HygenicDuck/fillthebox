@@ -64,6 +64,6 @@ public class Timer : MonoBehaviour
 
 	public bool TimeUp()
 	{
-		return (m_timeLeft == 0f);
+		return false;	//(m_timeLeft == 0f);
 	}
 }
