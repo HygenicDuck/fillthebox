@@ -401,6 +401,7 @@ GameObject:
   - component: {fileID: 1068225390}
   - component: {fileID: 1068225389}
   - component: {fileID: 1068225388}
+  - component: {fileID: 1068225391}
   m_Layer: 5
   m_Name: timer
   m_TagString: Untagged
@@ -477,6 +478,41 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1068225386}
+--- !u!114 &1068225391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1068225386}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92083be2545854d6a835a80e25a63684, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  scaleCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 2
+      time: 0.0071411133
+      value: 1.0329437
+      inSlope: 0.42095956
+      outSlope: 0.42095956
+      tangentMode: 0
+    - serializedVersion: 2
+      time: 0.13372904
+      value: 1.4515921
+      inSlope: 0.11911883
+      outSlope: 0.11911883
+      tangentMode: 0
+    - serializedVersion: 2
+      time: 0.2349701
+      value: 1.0275993
+      inSlope: 0.10196364
+      outSlope: 0.10196364
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
 --- !u!1 &1141669342
 GameObject:
   m_ObjectHideFlags: 0
@@ -729,7 +765,7 @@ MonoBehaviour:
   m_FontData:
     m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
     m_FontSize: 179
-    m_FontStyle: 0
+    m_FontStyle: 1
     m_BestFit: 0
     m_MinSize: 10
     m_MaxSize: 289
