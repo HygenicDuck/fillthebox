@@ -431,7 +431,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_animator: {fileID: 95953466940603068}
-  m_offscreenOffset: -4
+  m_offscreenOffset: -1.5
 --- !u!114 &114819618905087108
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -638,7 +638,7 @@ RectTransform:
   m_GameObject: {fileID: 1938878708534958}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: -1, y: 1.000294, z: 1.000294}
+  m_LocalScale: {x: -2, y: 2, z: 1.000294}
   m_Children:
   - {fileID: 224039882009582570}
   - {fileID: 224864534802115552}
@@ -648,7 +648,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 125, y: 263}
+  m_AnchoredPosition: {x: -142.9, y: 263}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224750764251174584
