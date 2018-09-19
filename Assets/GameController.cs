@@ -30,7 +30,8 @@ public class GameController : MonoBehaviour
 	[SerializeField] private GameObject[] m_boxPrefabs;
 	[SerializeField] private GameObject m_gameOverText;
 	[SerializeField] private Transform m_itemSpawnParent;
-	[SerializeField] private Vector2 m_bounceAmount;
+    [SerializeField] private Vector2 m_bounceAmount;
+    [SerializeField] private string[] m_boxSequence;
 
 	const float INITIAL_TIME = 10f;
 	const float TIME_ADDED_PER_ITEM = 6f;
@@ -38,6 +39,7 @@ public class GameController : MonoBehaviour
 
 	int m_currentBoxIndex = 0;
 	int m_currentItemIndex = 0;
+    int m_sequenceIndex = 0;
 
 	// Use this for initialization
 	void Start () 
@@ -99,12 +101,47 @@ public class GameController : MonoBehaviour
 			Destroy (m_currentBox.gameObject);
 		}
 
+        m_sequenceIndex++;
+        if (m_sequenceIndex >= m_boxSequence.Length)
+        {
+            m_sequenceIndex = 0;
+        }
+
 		m_currentBoxIndex++;
 		if (m_currentBoxIndex >= m_boxSpawnPositions.Length)
 		{
 			m_currentBoxIndex = 0;
 		}
 	}
+
+    void MakeBoxes()
+    {
+        // introduce all boxes specified at this step in the sequence
+        string s = m_boxSequence[m_sequenceIndex];
+        Debug.Log("s = " + s);
+        string[] pairs = s.Split(new char[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries);
+        foreach(string pair in pairs)
+        {
+            Debug.Log("pair = " + pair);
+            string[] p = pair.Split(new char[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
+            Debug.Log("p0 = " + p[0]);
+            Debug.Log("p1 = " + p[1]);
+            int boxIndex = System.Int32.Parse(p[0]);
+            int posIndex = System.Int32.Parse(p[1]);
+
+            m_currentBox = Instantiate(m_boxPrefabs[boxIndex], m_boxSpawnPositions[posIndex]).GetComponent<Box>();
+            m_currentBox.transform.localPosition = Vector3.zero;
+            Vector3 scale = m_currentBox.transform.localScale;
+            if (posIndex == 1)
+            {
+                scale.x = -scale.x;
+            }
+            m_currentBox.transform.localScale = scale;
+
+            Box box = m_currentBox.GetComponent<Box>();
+            box.ShowItemIndicator(m_currentItemTypes[Random.Range(0, m_currentItemTypes.Count)]);
+        }
+    }
 
 	void MakeBox()
 	{
@@ -153,7 +190,7 @@ public class GameController : MonoBehaviour
 		//Debug.Log ("After removing "+item.type+" : "+m_currentItemTypes.Count);
 		m_activeItems.Remove (item);
 		Destroy (item.gameObject);
-		m_currentBox.MoveBoxOff ((m_currentBoxIndex * 2)-1);
+		m_currentBox.MoveBoxOff ();
 		yield return new WaitForSeconds (0.2f);
 		Timer.Instance.IncreaseTime (TIME_ADDED_PER_ITEM);
 
@@ -174,8 +211,11 @@ public class GameController : MonoBehaviour
 		}
 		
 		NextBox ();
-		MakeBox ();
-		m_currentBox.MoveBoxOn ((m_currentBoxIndex * 2)-1);
+		MakeBoxes ();
+
+        int direction = (int)Mathf.Sign(m_currentBox.transform.localScale.x);
+        m_currentBox.MoveBoxOn();
+        //m_currentBox.MoveBoxOn((m_currentBoxIndex * 2) - 1);
 
 		Debug.Log ("m_currentItemTypes.Count = "+m_currentItemTypes.Count);
 		for (int i = m_currentItemTypes.Count-numItems; i < m_currentItemTypes.Count; i++)

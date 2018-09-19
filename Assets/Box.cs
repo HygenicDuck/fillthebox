@@ -25,8 +25,10 @@ public class Box : MonoBehaviour
 		m_animator.Play ("shut lid");
 	}
 
-	public void MoveBoxOff(int direction)
+	public void MoveBoxOff()
 	{
+        int direction = (int)Mathf.Sign(transform.localScale.x);
+
 		Mover mover = GetComponent<Mover> ();
 		if (mover != null)
 		{
@@ -34,8 +36,10 @@ public class Box : MonoBehaviour
 		}
 	}
 
-	public void MoveBoxOn(int direction)
+	public void MoveBoxOn()
 	{
+        int direction = (int)Mathf.Sign(transform.localScale.x);
+
 		Mover mover = GetComponent<Mover> ();
 		if (mover != null)
 		{
